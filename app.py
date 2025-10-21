@@ -2,7 +2,6 @@ import streamlit as st
 import numpy as np
 import itertools
 import pandas as pd
-import os
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference
@@ -60,7 +59,7 @@ run = st.button("🚀 計算を実行する", use_container_width=True, type="pr
 
 if run:
     # ----------------------------------------
-    # 🧠 内部処理
+    # 🧠 内部関数
     # ----------------------------------------
     def nonzero_list(row):
         return [v for v in row if v != 0.0]
@@ -94,6 +93,9 @@ if run:
     def canonicalize_columns(cols):
         return tuple(sorted(tuple(c) for c in cols))
 
+    # ----------------------------------------
+    # 📊 前処理
+    # ----------------------------------------
     nonzero_data = {k: nonzero_list(v) for k, v in data.items()}
     counts = [len(v) for v in nonzero_data.values()]
     k = min(counts)
@@ -104,9 +106,11 @@ if run:
     total_combinations = np.prod([len(p) for p in row_perms_list])
     st.write(f"全組み合わせ数: **{int(total_combinations):,}** 通り")
 
+    # ----------------------------------------
+    # 🧮 計算処理
+    # ----------------------------------------
     seen = {}
     results = []
-
     progress = st.progress(0)
     total = int(total_combinations)
     checked = 0
@@ -133,13 +137,12 @@ if run:
 
     progress.empty()
     results.sort(key=lambda x: x['sum_sd'])
-
     st.success("🎉 計算が完了しました！")
 
     # ----------------------------------------
-    # 📊 表示（詳細展開＋色付き）
+    # 🏆 表示（Top 10）
     # ----------------------------------------
-    labels = list(nonzero_data.keys())  # ['A', 'B', 'C', 'D']
+    labels = list(nonzero_data.keys())
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
               "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 
@@ -151,8 +154,6 @@ if run:
         with st.expander(f"🏅 Rank {i+1} — Sum_SD: {r['sum_sd']:.4f}"):
             st.write(f"**SDs:** {', '.join(f'{v:.3f}' for v in r['sds'])}")
             st.write(f"**Means:** {', '.join(f'{v:.3f}' for v in r['means'])}")
-
-            # --- 表形式で見やすく ---
             df_cols = pd.DataFrame(r["columns"], columns=labels)
             styled_df = df_cols.style.format(precision=3)
             for j, label in enumerate(labels):
@@ -164,46 +165,44 @@ if run:
                 })
             st.dataframe(styled_df, use_container_width=True)
 
-
     # ----------------------------------------
-    # 📈 Excel出力（グラフ付き） + リストを文字列化
+    # 📈 Excel出力（グラフ付き）
     # ----------------------------------------
-# --- Excel 出力 ---
-wb = Workbook()
-ws = wb.active
-ws.title = "Top Results"
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Top Results"
 
-df = pd.DataFrame([{
-    "Rank": i + 1,
-    "Sum_SD": round(r["sum_sd"], 6),
-    "SDs": ", ".join([f"{v:.3f}" for v in r["sds"]]),
-    "Means": ", ".join([f"{v:.3f}" for v in r["means"]]),
-    "Columns": str(r["columns"])
-} for i, r in enumerate(results[:topn])])
+    df = pd.DataFrame([{
+        "Rank": i + 1,
+        "Sum_SD": round(r["sum_sd"], 6),
+        "SDs": ", ".join([f"{v:.3f}" for v in r["sds"]]),
+        "Means": ", ".join([f"{v:.3f}" for v in r["means"]]),
+        "Columns": str(r["columns"])
+    } for i, r in enumerate(results[:topn])])
 
-for row in dataframe_to_rows(df, index=False, header=True):
-    ws.append(row)
+    for row in dataframe_to_rows(df, index=False, header=True):
+        ws.append(row)
 
-chart = BarChart()
-chart.title = "Sum_SD 比較"
-chart.x_axis.title = "Rank"
-chart.y_axis.title = "Sum_SD"
-data_ref = Reference(ws, min_col=2, min_row=1, max_row=len(df)+1)
-cats_ref = Reference(ws, min_col=1, min_row=2, max_row=len(df)+1)
-chart.add_data(data_ref, titles_from_data=True)
-chart.set_categories(cats_ref)
-ws.add_chart(chart, "H3")
+    chart = BarChart()
+    chart.title = "Sum_SD 比較"
+    chart.x_axis.title = "Rank"
+    chart.y_axis.title = "Sum_SD"
+    data_ref = Reference(ws, min_col=2, min_row=1, max_row=len(df)+1)
+    cats_ref = Reference(ws, min_col=1, min_row=2, max_row=len(df)+1)
+    chart.add_data(data_ref, titles_from_data=True)
+    chart.set_categories(cats_ref)
+    ws.add_chart(chart, "H3")
 
-output = BytesIO()
-wb.save(output)
-output.seek(0)
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
 
-st.download_button(
-    "⬇️ Excelで結果をダウンロード",
-    output,
-    file_name="DotBlot_Result.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    use_container_width=True
-)
+    st.download_button(
+        "⬇️ Excelで結果をダウンロード",
+        output,
+        file_name="DotBlot_Result.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
 
-st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
