@@ -179,12 +179,14 @@ if run:
     ws.title = "Top Results"
 
     df = pd.DataFrame([{
-        "Rank": i+1,
-        "Sum_SD": round(r["sum_sd"], 6),
-        "SDs": r["sds"],
-        "Means": r["means"],
-        "Columns": str(r["columns"])  # list→str
-    } for i, r in enumerate(results[:topn])])
+    "Rank": i+1,
+    "Sum_SD": round(r["sum_sd"], 6),
+    "SDs": r["sds"],
+    "Means": r["means"],
+    "Columns": str(r["columns"])  # ←ここで文字列に変換
+} for i, r in enumerate(results[:topn])])
+
+        
 
     for row in dataframe_to_rows(df, index=False, header=True):
         ws.append(row)
