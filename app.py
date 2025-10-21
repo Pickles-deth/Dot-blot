@@ -168,49 +168,42 @@ if run:
     # ----------------------------------------
     # 📈 Excel出力（グラフ付き） + リストを文字列化
     # ----------------------------------------
-if run:
-    # --- 計算処理で results 作成 ---
-    results.sort(key=lambda x: x['sum_sd'])
-    topn = min(10, len(results))
+# --- Excel 出力 ---
+wb = Workbook()
+ws = wb.active
+ws.title = "Top Results"
 
-    # --- Excel 出力 ---
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Top Results"
-
-    df = pd.DataFrame([{
-    "Rank": i+1,
+df = pd.DataFrame([{
+    "Rank": i + 1,
     "Sum_SD": round(r["sum_sd"], 6),
-    "SDs": r["sds"],
-    "Means": r["means"],
-    "Columns": str(r["columns"])  # ←ここで文字列に変換
+    "SDs": ", ".join([f"{v:.3f}" for v in r["sds"]]),
+    "Means": ", ".join([f"{v:.3f}" for v in r["means"]]),
+    "Columns": str(r["columns"])
 } for i, r in enumerate(results[:topn])])
 
-        
+for row in dataframe_to_rows(df, index=False, header=True):
+    ws.append(row)
 
-    for row in dataframe_to_rows(df, index=False, header=True):
-        ws.append(row)
+chart = BarChart()
+chart.title = "Sum_SD 比較"
+chart.x_axis.title = "Rank"
+chart.y_axis.title = "Sum_SD"
+data_ref = Reference(ws, min_col=2, min_row=1, max_row=len(df)+1)
+cats_ref = Reference(ws, min_col=1, min_row=2, max_row=len(df)+1)
+chart.add_data(data_ref, titles_from_data=True)
+chart.set_categories(cats_ref)
+ws.add_chart(chart, "H3")
 
-    chart = BarChart()
-    chart.title = "Sum_SD 比較"
-    chart.x_axis.title = "Rank"
-    chart.y_axis.title = "Sum_SD"
-    data_ref = Reference(ws, min_col=2, min_row=1, max_row=len(df)+1)
-    cats_ref = Reference(ws, min_col=1, min_row=2, max_row=len(df)+1)
-    chart.add_data(data_ref, titles_from_data=True)
-    chart.set_categories(cats_ref)
-    ws.add_chart(chart, "H3")
+output = BytesIO()
+wb.save(output)
+output.seek(0)
 
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
+st.download_button(
+    "⬇️ Excelで結果をダウンロード",
+    output,
+    file_name="DotBlot_Result.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    use_container_width=True
+)
 
-    st.download_button(
-        "⬇️ Excelで結果をダウンロード",
-        output,
-        file_name="DotBlot_Result.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True
-    )
-
-    st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
