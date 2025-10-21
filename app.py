@@ -168,9 +168,10 @@ if run:
     # ----------------------------------------
     # 📈 Excel出力（グラフ付き） + リストを文字列化
     # ----------------------------------------
-wb = Workbook()
-ws = wb.active
-ws.title = "Top Results"
+if run:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Top Results"
 
 # df を作り直して Columns を文字列化
 df = pd.DataFrame([{
@@ -213,5 +214,3 @@ st.download_button(
 )
     # 🎉 メッセージ表示
 st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
-
-
