@@ -212,5 +212,6 @@ st.download_button(
     use_container_width=True
 )
     # 🎉 メッセージ表示
-    st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
+
 
