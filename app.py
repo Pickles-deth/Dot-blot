@@ -136,17 +136,34 @@ if run:
 
     st.success("🎉 計算が完了しました！")
 
-    df = pd.DataFrame([
-        {"Rank": i+1, "Sum_SD": round(r["sum_sd"], 6),
-         "SDs": r["sds"], "Means": r["means"], "Columns": r["columns"]}
-        for i, r in enumerate(results[:20])
-    ])
+    # ----------------------------------------
+    # 📊 表示（詳細展開＋色付き）
+    # ----------------------------------------
+    labels = list(nonzero_data.keys())  # ['A', 'B', 'C', 'D']
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+              "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 
-    # ----------------------------------------
-    # 📊 結果表示
-    # ----------------------------------------
-    st.markdown("### 🏆 上位ランキング（Top 20）")
-    st.dataframe(df, use_container_width=True)
+    st.markdown("### 🏆 上位ランキング（Top 10）")
+    topn = min(10, len(results))
+
+    for i in range(topn):
+        r = results[i]
+        with st.expander(f"🏅 Rank {i+1} — Sum_SD: {r['sum_sd']:.4f}"):
+            st.write(f"**SDs:** {', '.join(f'{v:.3f}' for v in r['sds'])}")
+            st.write(f"**Means:** {', '.join(f'{v:.3f}' for v in r['means'])}")
+
+            # --- 表形式で見やすく ---
+            df_cols = pd.DataFrame(r["columns"], columns=labels)
+            styled_df = df_cols.style.format(precision=3)
+            for j, label in enumerate(labels):
+                styled_df = styled_df.set_properties(subset=[label], **{
+                    "color": "white",
+                    "background-color": colors[j % len(colors)],
+                    "font-weight": "bold",
+                    "text-align": "center"
+                })
+            st.dataframe(styled_df, use_container_width=True)
+
 
     # ----------------------------------------
     # 📈 Excel出力（グラフ付き） + リストを文字列化
