@@ -168,7 +168,7 @@ if run:
     # ----------------------------------------
     # 📈 Excel出力（グラフ付き） + リストを文字列化
     # ----------------------------------------
-   wb = Workbook()
+wb = Workbook()
 ws = wb.active
 ws.title = "Top Results"
 
@@ -213,3 +213,4 @@ st.download_button(
 )
     # 🎉 メッセージ表示
     st.markdown("<h2 style='text-align:center; color:#ff66b2;'>✨あはは、できちゃったよ✨</h2>", unsafe_allow_html=True)
+
